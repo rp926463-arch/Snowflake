@@ -1,0 +1,27 @@
+snowsql -a xj21352.central-india.azure -u RP926463
+
+
+CREATE STAGE::
+https://roboquery.com/app/syntax-create-stage-command-snowflake
+
+
+CREATE OR REPLACE STAGE my_int_stage
+  COPY_OPTIONS = (ON_ERROR='skip_file');
+
+PUT file://D:\Datasets\california_housing_train.csv @my_int_stage
+
+
+CREATE FILE FORMAT::
+https://roboquery.com/app/syntax-create-file-format-command-snowflake
+
+CREATE OR REPLACE FILE FORMAT my_csv_format
+  TYPE = CSV
+  FIELD_DELIMITER = '|'
+  SKIP_HEADER = 1
+  NULL_IF = ('NULL', 'null')
+  EMPTY_FIELD_AS_NULL = true
+  COMPRESSION = gzip;
+
+
+
+CREATE OR REPLACE TABLE SHUFFLED_EMPLOYEE (LONGITUDE_NEW varchar, LATITUDE_NEW FLOAT, HOUSING_MEDIAN_AGE varchar, TOTAL_ROOMS FLOAT, TOTAL_BEDROOMS FLOAT, POPULATION FLOAT, HOUSEHOLDS FLOAT, MEDIAN_INCOME FLOAT, MEDIAN_HOUSE_VALUE FLOAT)

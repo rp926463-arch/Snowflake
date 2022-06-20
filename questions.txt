@@ -1,0 +1,22 @@
+Q.1
+How snowflake distribute data into stage files
+e.g. I have one table with 105M records I've created stage for that same table
+that stage contains 204 files
+How data is distributed in these stages?
+
+Q.2
+Is there any efficient way to Copy Data from One SF table to Another
+Something like Bulk Insert
+If i do simple InsertInto, e.g. for 105M records it took 2m8s to copy data
+Suppose i have millions of billion records. 
+
+Q.3
+Can we access data stored in snowflake table as file.
+Something like external tables in hive, if not then where actually the data stored in snowflake & in what form.
+
+Q.4
+Why it is necessary to load data into snowflake stage in order to move data in and out.
+file--> stage --> table
+		?Why
+
+

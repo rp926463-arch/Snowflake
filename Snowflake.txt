@@ -1,0 +1,34 @@
+Console:
+https://xk62302.west-us-2.azure.snowflakecomputing.com/console#/internal/worksheet
+
+Documentation:
+https://docs.snowflake.com/en/index.html
+
+SnowFlake SQL commands: 
+https://docs.snowflake.com/en/sql-reference/sql-all.html
+
+https://www.youtube.com/watch?v=5vDTKt_D1to&list=PLRt-r4QiDOMeXYa3yVY2giFORai78iV34&t=10s
+_________________________________________________________________________________________________
+
+CREATE DATABASE CITYBIKE COMMENT = 'Sample Database';
+
+
+CREATE OR REPLACE TABLE trips
+(
+	tripduration INTEGER,
+	starttime TIMESTAMP,
+	stoptime TIMESTAMP,
+	start_station_id INTEGER,
+	start_station_name STRING,
+	start_station_latitude FLOAT,
+	start_station_longitude FLOAT,
+	end_station_id INTEGER,
+	end_station_name STRING,
+	end_station_latitude FLOAT,
+	end_station_longitude FLOAT,
+	bikeid INTEGER,
+	membership_type STRING,
+	usertype STRING,
+	birth_year INTEGER,
+	gender INTEGER
+);
