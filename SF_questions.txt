@@ -1,0 +1,34 @@
+Q.1
+How snowflake distribute data into stage files
+e.g. I have one table with 105M records I've created stage for that same table
+that stage contains 204 files
+How data is distributed in these stages?
+
+Q.2
+Is there any efficient way to Copy Data from One SF table to Another
+Something like Bulk Insert
+If i do simple InsertInto, e.g. for 105M records it took 2m8s to copy data
+Suppose i have millions of billion records. 
+
+Q.3
+Can we access data stored in snowflake table as file.
+Something like external tables in hive, if not then where actually the data stored in snowflake & in what form.
+
+Q.4
+Why it is necessary to load data into snowflake stage in order to move data in and out.
+file--> stage --> table
+--Stage is an area which is external to the database, but that area is accessible to database(most common loactions is S3 bucket & blob storage)
+--Staging area is intermediate, transit area used to process data for any of the extract, transform & load processes.
+--The concept of stage is used to as temporary area where data is to be loaded can be accessed by snowflake
+--Stage may be for cloud data or could be data you upload from your PC
+--Data can also be staged on your local file system before loading to snowflake
+
+CREATE STAGE <stage_name> url="cloud_storage_url" credentials="login_credentials"
+
+Q.5
+A virtual warehouse can be created or modified through the Snowflake WebUI or through SQL. Which method do you prefer and why?
+--I personally prefer the SQL method for a variety of reasons.
+
+The Snowflake WebUI doesn't show settings like "INITIALLY_SUSPENDED", "RESOURCE_MONITOR" and other parameters such as "MAX_CONCURRENCY_LEVEL", but you can configure these settings through the SQL syntax.
+
+Using SQL removes the dependency on the user interface, and eases any future automation.

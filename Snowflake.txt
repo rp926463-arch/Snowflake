@@ -1,3 +1,123 @@
+Snowflake DataWarehouse in cloud
+--purpose build only for cloud platform
+--Unique features like time travel & clonning
+--storage & compute charged independently(decoupled), only for use
+
+Pricing:
+--Charged Monthly for the data they store in snowflake
+--Customer pay through snowflake credits for compute
+--Sevices layer which hosts Metadata does not cost to customer(DB definition, Table definition, users)
+--NO cost to transfer data in to the Snowflake(other than storage & compute cost)
+--But Cost when you are moving data from one region to another/from one cloud platform to another 
+--Rate of consumption of snowflake credit depends on size of virtual warehouse.
+
+Data Warehouse:
+--is a analytical database which contains & process large volume of data
+--This large volume of data is collected from various source systems(CRM, Banking Transactions, spread sheets)
+
+LOAD_DATA ----> Staging --> RAW data --> Integrated data model --> Summary Data
+													   --> Access Layer
+
+Staging
+--is transient/temporary storage of data before it is getting loded into the target table
+--Staging area could be inside the database(Internal Stage) or outside the database(External Stage)
+
+Traditional Architecture
+1.Shared Disk Architecture
+--Storage is shared
+--easy to manage
+--performance affected by disk contention
+
+2.Shared Nothing Architecture
+--Storage & compute are decentralized
+--performance scales with storage & compute increase
+--Generally storage increase must be accompanied with compute increase.
+
+3.Snowflake uses unique Architecture that combines shared disk & shared nothing architecture
+--similar to shared disk snowflake uses single data repository
+--similar to shared nothing snowlake MPP compute clusters where each node stores and processes its part of data
+--This hybrid approch provides benefits of simple single disk storage but still allow to scale out as an when needed.
+
+--Snowflake uses cloud storage
+--Data is stored in a snowflake specific columnar format, which provides required efficiency & compression
+--This backend storage of data is not exposed to users, therefore users does not have to worry about format/management of data but rather snowflake will convert data into required columnar format & compress before storing it which reduce storage cost.
+--Since backend stoarge is cloud storage the amount of storage available for any snowflake instance is virtually unlimited.
+
+4.Multicluster warehouse(Large Warehouse)
+--Availble only for Enterprise customers
+--In Multicluster warehouses Snowflake automatically scales warehouse, it will keep that new warehouse active until wokload starts diminishing
+**XL-warehouses used by data scientist for analytical workloads. 
+
+
+@Snowflake Data loading options
+1)Bulk Load
+--COPY command is used for Batch loading
+--Batch loading of data which is already available to cloud or internal location
+--COPY command uses Virtual warehouse compute resource which needs to be managed manually
+--COPY command Allows basic transformations such as re-ordering columns, excluding columns, data typing, truncating strings.
+--COPY INTO command support several options to specify the files to load
+----By specifuing path to load
+----By specifying the file names to be loaded
+----Using a pattern matching to load only files matching pattern
+
+2)Continous load
+--SnowPipe is used for loading streaming data.
+--Uses serverless approach scalling Up/Down automatically.
+--Doesn't use virtual warehouse compute resources.
+
+3)Query data without loading data(Using External Tables)
+--it is not always necessary to load data into snowflake before you can access it.
+--In such cases you can use external tables to access data externally.
+--This is useful if there is a lot of data externally but you want to query only small subset of that data.
+--external table performance and associated costs can be optimised by creating materialised views.
+
+@STEPS to Bulk data load from cloud storage & local storage
+*Prepare your files(if required preprocess your files into the format that is optimal for loading)
+*Stage the data(Make Snowflake aware of data. Internal or external staging area)
+*Execute copy command
+*Manage regular loads
+
+@@Prepare your files
+--fields should be delimited by single character(e.g. pipe, comma, caret, tilde)
+--Rows delimited by a differant character. Usual newline character is common choice
+--Number of columns in each row should be consistent
+--if a field contains the delimiter character, the field should be enclosed in double quotes.
+
+@@Optimize file sizes
+--To take advantage of parallelism optimal compress file size is 10MB to 100MB
+--so, split very large files into multiple chunks and merge multiple small files into a single file to achieve optimal sizes
+--For continous load via snowpipe the recommended sizing approach is differant.
+
+@@Data Types
+--Numeric data types shouldn't have embedded characters(e.g. 123,456 should be 123456).
+--Date time datatype should be consistent and according to a format e.g. 2019-12-11
+    
+
+*Loading JSON Data - VIA Temporary table
+1)stage the data(Make JSON available in snowflake stage)
+2)Load as raw into temp table(Load the JSON data as raw string into a temporary table)
+3)Analyse & prepare(Using SQL analyse the JSON & prepare for flattening the structure)
+4)Flatten & load(flatten & load into target table)
+5)Regular updates(Regular updates to data may require delta detection)
+
+
+**SnowPipe
+--Snowpipe is a mechanism to enable loading of data as soon as it becomes available in a stage
+--Using snowpipe you can achieve micro-batched loading of data
+--it is used usually where there is continously arriving data like transactions or events and there is need to make that data available to business immediately.
+--Snowpipe uses serverless arch., so it will not use virtual warehouse instance but has its own processing and is billed differently.
+
+How does SnowPipe work
+--Snowpipe definitions contains copy statement which is used by snowflake to load data.
+--Snowpipe may be countinously or manually triggered to load data.
+
+**Steps to load data using SnowPipe
+1)Stage the data(Make streaming data available in a snowflake stage)
+2)Test your copy command(Create Target table & validate your copy into command)
+3)CREATE PIPE(create snowpipe using the tested copy command)
+4)Configure Cloud event(Use cloud native event triggers to trigger snowpipe)
+_________________________________________________________________________________________________
+
 Console:
 https://xk62302.west-us-2.azure.snowflakecomputing.com/console#/internal/worksheet
 
@@ -10,25 +130,12 @@ https://docs.snowflake.com/en/sql-reference/sql-all.html
 https://www.youtube.com/watch?v=5vDTKt_D1to&list=PLRt-r4QiDOMeXYa3yVY2giFORai78iV34&t=10s
 _________________________________________________________________________________________________
 
-CREATE DATABASE CITYBIKE COMMENT = 'Sample Database';
+IMP::
+Snowflake uses a mix of shared disk architecture & a compute layer which is shared nothing. This provides simplicity in storage of data and still provides capability to process that data in a massively parallel manner
 
+Snowflake allows ODBC & JDBC connectivity in addition to the SnowSQL CLI client
 
-CREATE OR REPLACE TABLE trips
-(
-	tripduration INTEGER,
-	starttime TIMESTAMP,
-	stoptime TIMESTAMP,
-	start_station_id INTEGER,
-	start_station_name STRING,
-	start_station_latitude FLOAT,
-	start_station_longitude FLOAT,
-	end_station_id INTEGER,
-	end_station_name STRING,
-	end_station_latitude FLOAT,
-	end_station_longitude FLOAT,
-	bikeid INTEGER,
-	membership_type STRING,
-	usertype STRING,
-	birth_year INTEGER,
-	gender INTEGER
-);
+Snowflake stores data internally as a columnar format which provides compression & efficient querying.
+
+1 day of time travel is available on the standard version as well as the premier version. Upto 90 days of time travel is available starting from the Enterprise version
+
