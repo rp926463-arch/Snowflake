@@ -1,3 +1,35 @@
+## Snowflake table size
+	SELECT table_catalog, 
+		   table_name, 
+		   active_bytes / 1024 AS storage_usage_MB 
+	FROM   "INFORMATION_SCHEMA".table_storage_metrics 
+	where TABLE_CATALOG in ('TEST_DB');
+
+For empty table You will get zero size, Quickest way to find out empty table in snowflake database;
++---------------+------------------+------------------+
+| TABLE_CATALOG | TABLE_NAME       | STORAGE_USAGE_MB |
+|---------------+------------------+------------------|
+| TEST_DB       | SAMPLE_EMPTY_TAB |         0.000000 |
++---------------+------------------+------------------+
+
+Row count for all the tables in database;
+	SELECT t.table_schema || '.' ||  t.table_name as "table_name",
+		   t.row_count
+	FROM information_schema.tables t
+	WHERE t.table_type = 'BASE TABLE'
+	ORDER BY t.row_count desc;
+	
+Combination of above both queries;;
+	SELECT t.table_schema || '.' ||  t.table_name as "table_name",
+		   t.row_count, 
+		   bytes, 
+		   bytes / 1024 AS storage_usage_MB, 
+		   bytes / (1024*1024) AS storage_usage_GB
+	FROM information_schema.tables t
+	WHERE t.table_type = 'BASE TABLE'
+	ORDER BY t.row_count;
+
+
 STAGE
 
 CREATE WAREHOUSE test WITH WAREHOUSE_SIZE = 'SMALL' WAREHOUSE_TYPE = 'STANDARD' AUTO_SUSPEND = 300 AUTO_RESUME = TRUE;

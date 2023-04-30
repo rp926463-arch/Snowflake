@@ -1,0 +1,73 @@
+CREATE SNOWPIPE
+
+https://docs.snowflake.com/en/user-guide/data-load-snowpipe-auto-azure.html
+
+//Step 1: Create a Cloud Storage Integration in Snowflake
+CREATE STORAGE INTEGRATION azure_int
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = AZURE
+  ENABLED = TRUE
+  AZURE_TENANT_ID = '5042b0c5-20b5-4f0d-b949-62fbababc688'
+  STORAGE_ALLOWED_LOCATIONS = ('azure://snowflakestorage199.blob.core.windows.net/snowpipe-streaming')
+  
+//Step 2: Grant Snowflake Access to the Storage Locations
+DESC STORAGE INTEGRATION azure_int;
+
+
+
+
+
+az storage account create --resource-group rg_snow --name sfqueuestorage199  --sku Standard_LRS --location eastus --kind StorageV2
+
+az storage queue create --name sfqueue --account-name sfqueuestorage199
+
+
+export storageid=$(az storage account show --name snowflakestorage199 --resource-group rg_snow --query id --output tsv)
+export queuestorageid=$(az storage account show --name sfqueuestorage199 --resource-group rg_snow --query id --output tsv)
+export queueid="$queuestorageid/queueservices/default/queues/sfqueue"
+
+
+az extension add --name eventgrid
+
+
+az eventgrid event-subscription create \
+--source-resource-id $storageid \
+--name eventgrid --endpoint-type storagequeue \
+--endpoint $queueid \
+--advanced-filter data.api stringin CopyBlob PutBlob PutBlockList FlushWithClose
+
+
+https://sfqueuestorage199.queue.core.windows.net/sfqueue
+
+
+
+//Step 1: Create a Cloud Notification Integration in Snowflake
+
+CREATE NOTIFICATION INTEGRATION my_notification_int
+  ENABLED = true
+  TYPE = QUEUE
+  NOTIFICATION_PROVIDER = AZURE_STORAGE_QUEUE
+  AZURE_STORAGE_QUEUE_PRIMARY_URI = 'https://sfqueuestorage199.queue.core.windows.net/sfqueue'
+  AZURE_TENANT_ID = '5042b0c5-20b5-4f0d-b949-62fbababc688';
+
+DESC NOTIFICATION INTEGRATION my_notification_int;
+
+
+USE SCHEMA INGEST_DATA.public;
+
+CREATE STAGE mystage
+  URL = 'azure://snowflakestorage199.blob.core.windows.net/snowpipe-streaming/'
+  STORAGE_INTEGRATION = azure_int;
+  
+
+CREATE TABLE organisations_json_raw (
+  json_data_raw VARIANT
+);
+
+create pipe INGEST_DATA.public.mypipe
+  auto_ingest = true
+  integration = 'MY_NOTIFICATION_INT'
+  as
+  copy into INGEST_DATA.public.ORGANISATIONS_JSON_RAW
+  from @INGEST_DATA.public.mystage
+  file_format = (type = 'JSON');
