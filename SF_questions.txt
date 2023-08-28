@@ -3,9 +3,7 @@ How snowflake distribute data into stage files
 e.g. I have one table with 105M records I've created stage for that same table
 that stage contains 204 files
 How data is distributed in these stages?
- 
-
-https://docs.snowflake.com/en/sql-reference/sql/create-clone.html.
+-->Snowflake distributes the data linearly as the data is inserted. There is no index concept for data distribution. Each micro partitions are of size 50-500 mb uncompressed and they are physical files stored in cloud service provider blob storage. Snowflake stores the MIN and MAX-values of each column of each micro-partition in it's Cloud Services Layer. This metadata is used to efficiently filter out micro-partitions before they are scanned, if a micro-partitions is not containing the needed data based on our WHERE-filters.
 
 Q.2
 Is there any efficient way to Copy Data from One SF table to Another, Something like Bulk Insert
@@ -40,3 +38,4 @@ A virtual warehouse can be created or modified through the Snowflake WebUI or th
 --The Snowflake WebUI doesn't show settings like "INITIALLY_SUSPENDED", "RESOURCE_MONITOR" and other parameters such as "MAX_CONCURRENCY_LEVEL", but you can configure these settings through the SQL syntax.
 --Using SQL removes the dependency on the user interface, and eases any future automation.
 
+Q.6 What are dynamic tables in Snowflake
