@@ -3,20 +3,29 @@ How snowflake distribute data into stage files
 e.g. I have one table with 105M records I've created stage for that same table
 that stage contains 204 files
 How data is distributed in these stages?
+ 
+
+https://docs.snowflake.com/en/sql-reference/sql/create-clone.html.
 
 Q.2
-Is there any efficient way to Copy Data from One SF table to Another
-Something like Bulk Insert
-If i do simple InsertInto, e.g. for 105M records it took 2m8s to copy data
-Suppose i have millions of billion records. 
+Is there any efficient way to Copy Data from One SF table to Another, Something like Bulk Insert
+If i do simple InsertInto, e.g. for 105M records it took 2m8s to copy data, Suppose i have millions of billion records.
+-->One of the best features of Snowflake is to be able to clone a table. When you clone a table, it does not copy any data, it just maps the existing micro-partitions to the new table. As you update the new table, it then starts to have its own partitions. But I can think of cloning as the most efficient way to copy one table to another
+https://docs.snowflake.com/en/sql-reference/sql/create-clone.html
 
 Q.3
-Can we access data stored in snowflake table as file.
-Something like external tables in hive, if not then where actually the data stored in snowflake & in what form.
+Can we access data stored in snowflake table as file, Something like external tables in hive, if not then where actually the data stored in snowflake & in what form.
+-->Snowflake stores data in micro-partitions using a proprietary format. As a user, you cannot directly access that data. However you can unload the data to any of the cloud object stores. 
+--Below link is for unloading to AWS S3
+--https://docs.snowflake.com/en/user-guide/data-unload-s3.html
+--You can also use GET to download data files from Snowflake stages to a local directory/folder on a client machine. Please see link below
+--https://docs.snowflake.com/en/sql-reference/sql/get.html#get
+Note: GET cannot download from external stages, it only works with internal stage
 
 Q.4
 Why it is necessary to load data into snowflake stage in order to move data in and out.
 file--> stage --> table
+This is actually a best practice. The stage hides the complexity of the rest of your data pipeline from your data sources(or System of records). You can have a common landing zone for all your SORs and have them send your data in any format(JSON, CSV, multi file format) to that zone(which is your stage area). Once the raw data is in stage, you can trigger your data pipeline which will then refine the data in subsequent data organization layers. Without the concept of stage, the SORs would have to send their data to tables in Raw zone which would require the SORs to know your table structure and schema. Also any changes to the schema will need to be relayed back to the SORs which would make your data ingestion process less efficient and less adaptable.
 --Stage is an area which is external to the database, but that area is accessible to database(most common loactions is S3 bucket & blob storage)
 --Staging area is intermediate, transit area used to process data for any of the extract, transform & load processes.
 --The concept of stage is used to as temporary area where data is to be loaded can be accessed by snowflake
@@ -28,7 +37,6 @@ CREATE STAGE <stage_name> url="cloud_storage_url" credentials="login_credentials
 Q.5
 A virtual warehouse can be created or modified through the Snowflake WebUI or through SQL. Which method do you prefer and why?
 --I personally prefer the SQL method for a variety of reasons.
+--The Snowflake WebUI doesn't show settings like "INITIALLY_SUSPENDED", "RESOURCE_MONITOR" and other parameters such as "MAX_CONCURRENCY_LEVEL", but you can configure these settings through the SQL syntax.
+--Using SQL removes the dependency on the user interface, and eases any future automation.
 
-The Snowflake WebUI doesn't show settings like "INITIALLY_SUSPENDED", "RESOURCE_MONITOR" and other parameters such as "MAX_CONCURRENCY_LEVEL", but you can configure these settings through the SQL syntax.
-
-Using SQL removes the dependency on the user interface, and eases any future automation.
