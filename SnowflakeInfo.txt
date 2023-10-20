@@ -1,3 +1,19 @@
+Some Information about Snowflake micro-paritions:
+--Snowflake stores data in micropartions in FDN format, FDN "Flocon De Neige" which is snowflake in French. (.FDN) 	is snowflake proprietary format.
+--Snowflake stores tables by dividing their rows across multiple micro-partitions (horizontal partitioning).  All data in Snowflake tables is automatically divided into micro-partitions, which are contiguous units of storage.
+--Each micro-partition contains between 50 MB and 500 MB of uncompressed data, which will be compressed on storage.
+--Groups of rows in tables are mapped into individual micro-partitions, organized in a columnar fashion.
+
+Question:
+	Q. when i just insert one individual record, does snowflake create a new Micropartition file for it?
+		Yes, each individual insert will create one micro-parition & it is immutable, that why it is not advisable to insert records one at a time, which implies you should not use snowflake table as metadata/status table, this is by design.
+		Inserting one record Vs 1,00,000 records will take roughly same amount of time (as equivalent to create one partition), it is therefore recommended to do batch insert in snowflake.
+
+So basically, Snowflake applies two level of query pruning stategy.
+	1.Snowflake stores metadata & statistics about each micro-partition. So it knows the range of values annd number of distinct values in each micro-partition, when we apply filter in where cause it knows which micro-partition would have desired data, this allows first level of partition prunning & target only those micro-partition where desired data is stored. So, First prune micro-paritions based on metadata information.
+	
+	2.In the next step, as data is stored in column fashion, it only read the desired columns & this allows 2nd level of column prunning & minimise overall I/O for your query
+
 Snowflake DataWarehouse in cloud
 --purpose build only for cloud platform
 --Unique features like time travel & clonning
@@ -15,8 +31,7 @@ Data Warehouse:
 --is a analytical database which contains & process large volume of data
 --This large volume of data is collected from various source systems(CRM, Banking Transactions, spread sheets)
 
-LOAD_DATA ----> Staging --> RAW data --> Integrated data model --> Summary Data
-													   --> Access Layer
+LOAD_DATA ----> Staging --> RAW data --> Integrated data model --> Summary Data --> Access Layer
 
 Staging
 --is transient/temporary storage of data before it is getting loded into the target table
@@ -120,6 +135,8 @@ ________________________________________________________________________________
 
 Console:
 https://xk62302.west-us-2.azure.snowflakecomputing.com/console#/internal/worksheet
+
+Save Money on snowflake deployments : https://community.snowflake.com/s/article/26-Quick-Tips-To-Save-You-Money-On-Your-Snowflake-Deployment
 
 Documentation:
 https://docs.snowflake.com/en/index.html
